@@ -69,7 +69,7 @@ class DocumentProperties(SchemaProperties):
                         for index in attrs['indexes']+parent.indexes:
                             if index not in attrs['indexes']:
                                 attrs['indexes'].append(index)
-        return SchemaProperties.__new__(cls, name, bases, attrs)        
+        return SchemaProperties.__new__(cls, name, bases, attrs)
 
     @classmethod
     def _validate_descriptors(cls, attrs):
@@ -291,7 +291,7 @@ class Document(SchemaDocument):
         `one()` act like `find()` but will raise a
         `mongokit.MultipleResultsFound` exception if there is more than one
         result.
-    
+
         If no document is found, `one()` returns `None`
         """
         bson_obj = self.find(*args, **kwargs)
@@ -359,7 +359,7 @@ class Document(SchemaDocument):
         """
         allow to refresh the document, so after using update(), it could reload
         its value from the database.
-        
+
         Be carrefull : reload() will erase all unsaved values.
 
         If no _id is set in the document, a KeyError is raised.
@@ -448,7 +448,7 @@ class Document(SchemaDocument):
                     struct[key] = totimestamp(struct[key])
                 elif isinstance(struct[key], ObjectId):
                     #struct[key] = str(struct[key])
-                    struct[key] = {'$oid': str(struct[key])} 
+                    struct[key] = {'$oid': str(struct[key])}
                 elif isinstance(struct[key], dict):
                     _convert_to_json(struct[key], doc)
                 elif isinstance(struct[key], list) and len(struct[key]):
@@ -579,7 +579,7 @@ class Document(SchemaDocument):
             if '$oid' in obj['_id']:
                 obj['_id'] = ObjectId(obj['_id']['$oid'])
         return self._obj_class(obj, collection=self.collection)
- 
+
 
     #
     # End of public API
@@ -600,9 +600,9 @@ class Document(SchemaDocument):
     def __getattribute__(self, key):
         if key in ['collection', 'db', 'connection']:
             if self.__dict__.get(key) is None:
-                raise ConnectionError('No collection found') 
+                raise ConnectionError('No collection found')
         return super(Document, self).__getattribute__(key)
- 
+
     def _make_reference(self, doc, struct, path=""):
         """
         * wrap all MongoDocument with the CustomType "R()"
@@ -635,7 +635,7 @@ class Document(SchemaDocument):
                     #doc._process_custom_type('python', doc, doc.structure)
                 # be sure that we have an instance of MongoDocument
                 if not isinstance(doc[key], struct[key]._doc) and doc[key] is not None:
-                    self._raise_exception(SchemaTypeError, new_path, 
+                    self._raise_exception(SchemaTypeError, new_path,
                       "%s must be an instance of %s not %s" % (
                         new_path, struct[key]._doc.__name__, type(doc[key]).__name__))
                 # validate the embed doc
@@ -665,7 +665,7 @@ class Document(SchemaDocument):
                 # it with None values
                 #
                 if len(struct[key]) and\
-                  not [i for i in struct[key].keys() if type(i) is type]: 
+                  not [i for i in struct[key].keys() if type(i) is type]:
                     if key in doc:
                         self._make_reference(doc[key], struct[key], new_path)
                 else:# case {unicode:int}
@@ -715,11 +715,11 @@ class R(CustomType):
         self._doc = doc
         self._fallback_database = fallback_database
         self.connection = connection
-    
+
     def to_bson(self, value):
         if value is not None:
             return DBRef(database=value.db.name, collection=value.collection.name, id=value['_id'])
-        
+
     def to_python(self, value):
         if value is not None:
             if not isinstance(value, DBRef):
@@ -744,4 +744,3 @@ class R(CustomType):
                   'A document with id "%s" is not saved in the database "%s" but was giving as'
                   ' a reference to a %s document' % (value.id, database, self._doc.__name__))
             return self._doc(doc, collection=col)
-

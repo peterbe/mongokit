@@ -42,7 +42,7 @@ class Database(PymongoDatabase):
             return getattr(self[document.__collection__], key)
         else:
             if not key in self._collections:
-                self._collections[key] = Collection(self, key) 
+                self._collections[key] = Collection(self, key)
             return self._collections[key]
 
 
@@ -76,4 +76,3 @@ class Database(PymongoDatabase):
         if wrap is not None:
             return wrap(son, collection=collection)
         return son
-

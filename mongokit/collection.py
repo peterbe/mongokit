@@ -36,6 +36,7 @@ class Collection(PymongoCollection):
         self._collections = {}
         super(Collection, self).__init__(*args, **kwargs)
         self._registered_documents = self.database.connection._registered_documents
+        self.always_dot_notation = False
 
     def __getattr__(self, key):
         if key in self._registered_documents:
@@ -43,9 +44,12 @@ class Collection(PymongoCollection):
                 self._documents[key] = self._registered_documents[key](collection=self)
                 self._documents[key].generate_index(self)
             return self._documents[key]
+        elif key == 'always_dot_notation':
+            return self.always_dot_notation
         else:
             newkey = u"%s.%s" % (self.name, key)
             if not newkey in self._collections:
+                #print "Creating new collection called", newkey
                 self._collections[newkey] = Collection(self.database, newkey)
             return self._collections[newkey]
 
@@ -64,6 +68,14 @@ class Collection(PymongoCollection):
           "register it to the connection." % (name, name))
 
     def find(self, *args, **kwargs):
+        #print getattr(self, 'always_dot_notation')
+        if not kwargs and hasattr(self, 'always_dot_notation') and self.always_dot_notation:
+            #print "SELF"
+            #print self
+            #print "HEREHHHH"
+            #print self.name
+            kwargs['wrap'] = dict_plus
+            #print "WRAP!!"
         return Cursor(self, *args, **kwargs)
     find.__doc__ = PymongoCollection.find.__doc__ + """
         added by mongokit::
@@ -107,3 +119,17 @@ class Collection(PymongoCollection):
             num = random.randint(0, max-1)
             return self.find().skip(num).next()
 
+
+class dict_plus(dict):
+    def __init__(self, *args, **kwargs):
+        if 'collection' in kwargs: # excess we don't need
+            kwargs.pop('collection')
+        dict.__init__(self, *args, **kwargs)
+        self._wrap_internal_dicts()
+    def _wrap_internal_dicts(self):
+        for key, value in self.items():
+            if isinstance(value, dict):
+                self[key] = dict_plus(value)
+
+    def __getattr__(self, key):
+        return self[key]

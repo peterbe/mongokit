@@ -61,11 +61,11 @@ __all__ = [
     'Set'
 ]
 
-class CustomType(object): 
+class CustomType(object):
     init_type = None
     mongo_type = None
     python_type = None
-    
+
     def __init__(self):
         if self.mongo_type is None:
             raise TypeError("`mongo_type` property must be specify in %s" %
@@ -164,7 +164,7 @@ class SchemaProperties(type):
         attrs['_i18n_namespace'] = []
         if attrs.get('i18n'):
             attrs['_i18n_namespace'] = set(['.'.join(i.split('.')[:-1]) for i in attrs['i18n']])
-        return type.__new__(cls, name, bases, attrs)        
+        return type.__new__(cls, name, bases, attrs)
 
     @classmethod
     def _validate_descriptors(cls, attrs):
@@ -203,14 +203,14 @@ class SchemaDocument(dict):
     ...         "foo":unicode,
     ...         "bar":int,
     ...         "nested":{
-    ...            "bla":float}} 
+    ...            "bla":float}}
 
     `unicode`, `int`, `float` are python types listed in `mongokit.authorized_types`.
-    
+
     >>> doc = TestDoc()
     >>> doc
     {'foo': None, 'bar': None, 'nested': {'bla': None}}
-    
+
     A SchemaDocument works just like dict:
 
     >>> doc['bar'] = 3
@@ -264,7 +264,7 @@ class SchemaDocument(dict):
     {"foo":{"bar":u"bla}}
     """
     __metaclass__ = SchemaProperties
-    
+
     structure = None
     required_fields = []
     default_values = {}
@@ -285,9 +285,9 @@ class SchemaDocument(dict):
       long,
       float,
       unicode,
-      list, 
+      list,
       dict,
-      datetime.datetime, 
+      datetime.datetime,
       CustomType,
     ]
 
@@ -337,10 +337,10 @@ class SchemaDocument(dict):
         This method will verify if :
           * the doc follow the structure,
           * all required fields are filled
-        
+
         Additionnaly, this method will process all
         validators.
-        
+
         """
         if self.validators:
             self._process_validators(self, self.structure)
@@ -361,7 +361,7 @@ class SchemaDocument(dict):
            if self.dot_notation_warning and not key.startswith('_') and\
              key not in ['db', 'collection', 'versioning_collection', 'connection', 'fs']:
                log.warning("dot notation: %s was not found in structure. Add it as attribute instead" % key)
-           dict.__setattr__(self, key, value) 
+           dict.__setattr__(self, key, value)
 
     def __getattr__(self, key):
         if key not in self._protected_field_names and self.use_dot_notation and key in self:
@@ -371,12 +371,12 @@ class SchemaDocument(dict):
                 return self[key][self._current_lang]
             return self[key]
         else:
-            return dict.__getattribute__(self, key) 
+            return dict.__getattribute__(self, key)
 
     #
     # Public API end
     #
- 
+
     @classmethod
     def __walk_dict(cls, dic):
         # thanks jean_b for the patch
@@ -438,10 +438,10 @@ class SchemaDocument(dict):
             elif isinstance(struct, dict):
                 for key in struct:
                     if isinstance(key, basestring):
-                        if "." in key: 
+                        if "." in key:
                             raise BadKeyError(
                               "%s: %s must not contain '.'" % (name, key))
-                        if key.startswith('$'): 
+                        if key.startswith('$'):
                             raise BadKeyError(
                               "%s: %s must not start with '$'" % (name, key))
                     elif type(key) is type:
@@ -492,7 +492,7 @@ class SchemaDocument(dict):
                               "%s: %s in %s is not an authorized type (%s found)" % (name, operand, struct, type(operand).__name__))
                 else:
                     for operand in struct:
-                        if operand not in authorized_types: 
+                        if operand not in authorized_types:
                             raise StructureError(
                               "%s: %s in %s is not an authorized type (%s found)" % (name, operand, struct, type(operand).__name__))
             elif isinstance(struct, SchemaProperties):
@@ -521,7 +521,7 @@ class SchemaDocument(dict):
             if not field in self.validation_errors:
                 self.validation_errors[field] = []
             self.validation_errors[field].append(exception(message))
-                    
+
     def _validate_doc(self, doc, struct, path = ""):
         """
         check it doc field types match the doc field structure
@@ -605,7 +605,7 @@ class SchemaDocument(dict):
                     path, len(struct), len(doc)))
             for i in range(len(struct)):
                 self._validate_doc(doc[i], struct[i], path)
-            
+
     def _process_validators(self, doc, struct, path = ""):
         doted_struct = DotCollapsedDict(self.structure)
         doted_doc = DotCollapsedDict(doc)
@@ -680,7 +680,7 @@ class SchemaDocument(dict):
                         if doc.get(key):
                             for obj in doc[key]:
                                 self._process_custom_type(target, obj, struct[key][0], new_path, root_path)
-            
+
     def _set_default_fields(self, doc, struct, path = ""):
         # TODO check this out, this method must be restructured
         for key in struct:
@@ -742,7 +742,7 @@ class SchemaDocument(dict):
                                 self._raise_exception(DefaultFieldTypeError, new_path,
                                   "%s must be an instance of %s not %s" % (
                                     new_path, struct[key][0].python_type.__name__, type(new_value).__name__))
-                        doc[key].append(new_value)  
+                        doc[key].append(new_value)
             else: # what else
                 if new_path in self.default_values:
                     new_value = self.default_values[new_path]
@@ -846,7 +846,7 @@ class SchemaDocument(dict):
         doted_dict = DotCollapsedDict(self.structure)
         for field in self.i18n:
             if field not in doted_dict:
-                self._raise_exception(ValidationError, field, 
+                self._raise_exception(ValidationError, field,
                   "%s not found in structure" % field)
             if not isinstance(doted_dict[field], i18n):
                 doted_dict[field] = i18n(
@@ -888,7 +888,7 @@ class i18n(dict, CustomType):
                           "%s (%s) must be an instance of %s not %s" % (
                             self._field_name, l, self._field_type, type(v).__name__))
             return [{'lang':l, 'value':v} for l,v in value.iteritems()]
-        
+
     def to_python(self, value):
         if value is not None:
             i18n_dict = self.__class__(self._field_type)
@@ -920,4 +920,3 @@ class Set(CustomType):
                 if not isinstance(val, self._structure_type):
                     raise ValueError('%s must be an instance of %s not %s' %
                       (path, self._structure_type.__name__, type(val).__name__))
-        
